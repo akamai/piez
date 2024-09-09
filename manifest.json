@@ -1,10 +1,11 @@
 {
 	"name": "Piez",
-	"version": "2.4.0",
-	"manifest_version": 2,
+	"version": "2.5.0",
+	"manifest_version": 3,
 	"description" : "Piez displays optimizations made by Akamai Image Manager, Resource Optimizer, Push/Preconnect, and Script Manager.",
 	"icons": { "16": "icons/16x16.png", "19": "icons/19x19.png", "38": "icons/38x38.png", "48": "icons/48x48.png", "128": "icons/128x128.png" },
-	"permissions": ["storage", "tabs", "webNavigation", "webRequest", "webRequestBlocking", "<all_urls>"],
+	"permissions": ["storage", "tabs", "webNavigation", "webRequest", "webRequestBlocking"],
+	"host_permissions": ["<all_urls>"],
 	"devtools_page": "devtools/devtools.html",
 
 	"browser_action": {
@@ -19,8 +20,7 @@
 	"content_security_policy": "script-src 'self' https://www.google-analytics.com/analytics.js; object-src 'self'",
 
 	"background": {
-		"scripts": ["background.js"],
-		"persistent": true
+		"service_worker": "service_worker.js"
 	},
 
 	"incognito" : "spanning"
