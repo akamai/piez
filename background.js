@@ -1,6 +1,6 @@
-var inspectedTab = {};
-var devtools_port;
-var piezCurrentStateOptions = {
+let inspectedTab = {};
+let devtools_port;
+const piezCurrentStateOptions = {
 	'piez-im-simple':
 	{
 		'browserActionText': 'IM',
@@ -36,10 +36,10 @@ var piezCurrentStateOptions = {
 		'localStorageState': 'piez-off'
 	}
 };
-var piezCurrentStateCached = '';
-var piezCurrentOptionsCached = [];
+let piezCurrentStateCached = '';
+let piezCurrentOptionsCached = [];
 
-beforeSendCallback = function (details) {
+const beforeSendCallback = function (details) {
 	if (details.url.indexOf('http') != -1) {
 		if (piezCurrentStateCached == 'piez-a2') {
 			details.requestHeaders.push({ name: 'pragma', value: 'x-akamai-a2-trace' });
@@ -48,7 +48,7 @@ beforeSendCallback = function (details) {
 			details.requestHeaders.push({ name: 'x-im-piez', value: 'on' });
 			details.requestHeaders.push({ name: 'pragma', value: 'akamai-x-ro-trace' });
 			details.requestHeaders.push({ name: 'x-akamai-ro-piez', value: 'on' });
-			details.requestHeaders.push({ name: 'x-akamai-a2-disable', value: 'on' })
+			details.requestHeaders.push({ name: 'x-akamai-a2-disable', value: 'on' });
 		}
 		if (piezCurrentOptionsCached.includes('save-data')) {
 			details.requestHeaders.push({ name: 'Save-Data', value: 'on' });
@@ -97,7 +97,7 @@ chrome.runtime.onConnect.addListener(function (port) {
 				});
 				break;
 			case "update-piez-analytics":
-				chrome.tabs.getSelected(null, function (tab) {
+				chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
 					logUrlAnalytics(tab);
 				});
 				break;
@@ -156,27 +156,44 @@ var logUrlAnalytics = function(tab) {
 	ga('send', 'pageview', tab.url);
 };
 
-var setPiezCurrentState = function(state) {
+const setPiezCurrentState = function(state) {
  	if (state == 'piez-off') {
 		chrome.storage.local.set({ "piezCurrentState": state }, function () {
 			piezCurrentStateCached = state;
-			chrome.browserAction.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
-			chrome.browserAction.setBadgeBackgroundColor({ "color": [255, 0, 0, 255] });
-			chrome.webRequest.onBeforeSendHeaders.removeListener(beforeSendCallback);
+			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
+			chrome.action.setBadgeBackgroundColor({ "color": [255, 0, 0, 255] });
+			chrome.declarativeNetRequest.updateDynamicRules({
+				removeRuleIds: [1],
+			  });
 		});
 	} else {
 		chrome.storage.local.set({ "piezCurrentState": state }, function () {
 			piezCurrentStateCached = state;
-			chrome.browserAction.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
-			chrome.browserAction.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
-			if (!chrome.webRequest.onBeforeSendHeaders.hasListener(beforeSendCallback)) {
-				chrome.webRequest.onBeforeSendHeaders.addListener(beforeSendCallback, { urls: ["<all_urls>"] }, ['requestHeaders', 'extraHeaders', 'blocking']);
-			}
+			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
+			chrome.action.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
+
+			chrome.declarativeNetRequest.updateDynamicRules({
+				removeRuleIds: [1],
+				addRules: [{
+				  id: 1,
+				  priority: 1,
+				  action: {
+					type: 'modifyHeaders',
+					requestHeaders: [
+					  { header: 'x-im-piez', operation: 'set', value: 'on' },
+					  { header: 'pragma', operation: 'set', value: 'akamai-x-ro-trace' },
+					  { header: 'x-akamai-ro-piez', operation: 'set', value: 'on' },
+					  { header: 'x-akamai-a2-disable', operation: 'set', value: 'on' }
+					]
+				  },
+				  condition: { urlFilter: '*', resourceTypes: ['main_frame'] }
+				}]
+			  });
 		});
 	}
 };
 
-var setPiezCurrentSettings = function(options) {
+const setPiezCurrentSettings = function(options) {
 	chrome.storage.local.set({ "piezCurrentOptions": options }, function () {
 		piezCurrentOptionsCached = options;
 	});
@@ -190,12 +207,12 @@ chrome.runtime.onStartup.addListener(function () {
 	initPiezStorageState();
 });
 
-var initPiezStorageState = function () {
+const initPiezStorageState = function () {
 	chrome.storage.local.get("piezCurrentState", function (result) {
 		if (result["piezCurrentState"] == undefined) {
 			setPiezCurrentState('piez-im-simple');
 		} else {
-			key = result["piezCurrentState"];
+			const key = result["piezCurrentState"];
 			if (piezCurrentStateOptions[key] == undefined) {
 				setPiezCurrentState('piez-im-simple');
 			} else {
