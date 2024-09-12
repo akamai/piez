@@ -1,4 +1,4 @@
-var piezController = {};
+let piezController = {};
 piezController.current_page = new Page();
 chrome.storage.local.get('piezCurrentState', function (result) {
 	piezController.current_display_mode = result['piezCurrentState'] || 'piezModeImSimple';
@@ -9,7 +9,7 @@ chrome.storage.local.get('piezCurrentOptions', function (options) {
 		document.body.classList.add('present-mode');
 	}
 });
-var port = chrome.runtime.connect({ name: 'piez' });
+let port = chrome.runtime.connect({ name: 'piez' });
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
 	for (var key in changes) {

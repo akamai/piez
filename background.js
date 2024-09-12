@@ -115,31 +115,19 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	console.log('here we go');
 	switch (request.type) {
 		case "piez-off":
-			setPiezCurrentState('piez-off');
-			break;
 		case "piez-im-simple":
-			setPiezCurrentState('piez-im-simple');
-			break;
 		case "piez-im-advanced":
-			setPiezCurrentState('piez-im-advanced');
-			break;
 		case "piez-a2":
-			setPiezCurrentState('piez-a2');
-			break;
 		case "piez-ro-simple":
-			setPiezCurrentState('piez-ro-simple');
-			break;
 		case "piez-ro-advanced":
-			setPiezCurrentState('piez-ro-advanced');
-			break;
 		case "piez-3pm":
-			setPiezCurrentState('piez-3pm');
-			break;
+		  setPiezCurrentState(request.type);
+		  break;
 		case "piez-options":
-			setPiezCurrentSettings(request.options);
-			break;
+		  setPiezCurrentSettings(request.options);
+		  break;
 		default:
-			console.log('Unexpected extension request. ', request);
+		  console.log('Unexpected extension request. ', request);
 	}
 	return false;
 });
@@ -172,23 +160,35 @@ const setPiezCurrentState = function(state) {
 			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
 			chrome.action.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
 
+			piezRequestHeaders = [];
+
+			if (piezCurrentStateCached == 'piez-a2') {
+				piezRequestHeaders.push({ header: 'pragma', operation: 'set', value: 'x-akamai-a2-trace' });
+				piezRequestHeaders.push({ header: 'x-akamai-rua-debug', operation: 'set', value: 'on' });
+			} else {
+				piezRequestHeaders.push({ header: 'x-im-piez', operation: 'set', value: 'on' });
+				piezRequestHeaders.push({ header: 'pragma', operation: 'set', value: 'akamai-x-ro-trace' });
+				piezRequestHeaders.push({ header: 'x-akamai-ro-piez', operation: 'set', value: 'on' });
+				piezRequestHeaders.push({ header: 'x-akamai-a2-disable', operation: 'set', value: 'on' })
+			}
+			if (piezCurrentOptionsCached.includes('save-data')) {
+				piezRequestHeaders.push({ header: 'Save-Data', operation: 'set', value: 'on' });
+			}
+
 			chrome.declarativeNetRequest.updateDynamicRules({
 				removeRuleIds: [1],
 				addRules: [{
-				  id: 1,
-				  priority: 1,
-				  action: {
-					type: 'modifyHeaders',
-					requestHeaders: [
-					  { header: 'x-im-piez', operation: 'set', value: 'on' },
-					  { header: 'pragma', operation: 'set', value: 'akamai-x-ro-trace' },
-					  { header: 'x-akamai-ro-piez', operation: 'set', value: 'on' },
-					  { header: 'x-akamai-a2-disable', operation: 'set', value: 'on' }
-					]
-				  },
-				  condition: { urlFilter: '*', resourceTypes: ['main_frame'] }
+					id: 1,
+					priority: 1,
+					action: {
+						type: 'modifyHeaders',
+						requestHeaders: piezRequestHeaders
+					},
+					condition: { urlFilter: '*', resourceTypes: ['main_frame'] }
 				}]
-			  });
+				});
+
+
 		});
 	}
 };
