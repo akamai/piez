@@ -71,9 +71,11 @@ window.onload = function() {
 			document.getElementById(result["piezCurrentState"]).checked = true;
 		});
 		chrome.storage.local.get("piezCurrentOptions", function(options) {
-			options["piezCurrentOptions"].forEach((option) => {
-				document.getElementById(option).checked = true;
-			});
+			if(options["piezCurrentOptions"]) {
+				options["piezCurrentOptions"].forEach((option) => {
+					document.getElementById(option).checked = true;
+				});
+			}
 		});
 	};
 
