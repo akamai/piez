@@ -96,11 +96,6 @@ chrome.runtime.onConnect.addListener(function (port) {
 					}
 				});
 				break;
-			case "update-piez-analytics":
-				chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-					logUrlAnalytics(tab);
-				});
-				break;
 			default:
 				console.log('Unexpected message from devtools. ', message);
 		}
@@ -112,7 +107,6 @@ chrome.runtime.onConnect.addListener(function (port) {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	console.log('here we go');
 	switch (request.type) {
 		case "piez-off":
 		case "piez-im-simple":
@@ -121,9 +115,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		case "piez-ro-simple":
 		case "piez-ro-advanced":
 		case "piez-3pm":
+		  console.log("Setting PiezCurrentState: " + request.type);
 		  setPiezCurrentState(request.type);
 		  break;
 		case "piez-options":
+		  console.log("Setting PiezCurrentState: " + request.options);
 		  setPiezCurrentSettings(request.options);
 		  break;
 		default:
@@ -131,18 +127,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	}
 	return false;
 });
-
-var logUrlAnalytics = function(tab) {
-	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-	ga('create', 'UA-62551710-2', 'auto');
-	ga('set', 'checkProtocolTask', function () { });
-	ga('require', 'displayfeatures');
-	ga('send', 'pageview', tab.url);
-};
 
 const setPiezCurrentState = function(state) {
  	if (state == 'piez-off') {
@@ -184,7 +168,7 @@ const setPiezCurrentState = function(state) {
 						type: 'modifyHeaders',
 						requestHeaders: piezRequestHeaders
 					},
-					condition: { urlFilter: '*', resourceTypes: ['main_frame'] }
+					condition: { urlFilter: '*', resourceTypes: ['main_frame', 'image', 'font', 'script', 'stylesheet'] }
 				}]
 				});
 
