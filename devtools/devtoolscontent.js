@@ -12,7 +12,7 @@ chrome.storage.local.get('piezCurrentOptions', function (options) {
 let port = chrome.runtime.connect({ name: 'piez' });
 
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-	for (var key in changes) {
+	for (let key in changes) {
 		if (key === "piezCurrentOptions") {
 			if(changes[key].newValue.includes('present-mode')) {
 				document.body.classList.add('present-mode');

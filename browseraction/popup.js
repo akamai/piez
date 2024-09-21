@@ -55,9 +55,9 @@ window.onload = function() {
 		})
 	};
 
-	var getOptions = function() {
-		var allOptions = document.getElementsByClassName("piez-options");
-		var checkedOptions = [];
+	let getOptions = function() {
+		let allOptions = document.getElementsByClassName("piez-options");
+		let checkedOptions = [];
 		Array.from(allOptions).forEach((option) => {
 			if (option.checked) {
 				checkedOptions.push(option.value);
@@ -66,7 +66,7 @@ window.onload = function() {
 		return checkedOptions;
 	};
 
-	var setFormField = function(piezSettings) {
+	let setFormField = function(piezSettings) {
 		chrome.storage.local.get("piezCurrentState", function(result) {
 			document.getElementById(result["piezCurrentState"]).checked = true;
 		});

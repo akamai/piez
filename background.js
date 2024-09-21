@@ -66,9 +66,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(function beforeNavigate(detail
 
 //get the actual url to use if there's a redirect for the base page
 chrome.webRequest.onBeforeRedirect.addListener(function getNewUrl(redirect) {
-	var urlMatch = new RegExp('(' + inspectedTab.url + '|' + inspectedTab.url + '/)', 'i');
+	let urlMatch = new RegExp('(' + inspectedTab.url + '|' + inspectedTab.url + '/)', 'i');
 	if (redirect.tabId === inspectedTab.id && redirect.frameId === 0 && urlMatch.test(redirect.url)) {
-		var newLocation = redirect.responseHeaders.find(function (header) {
+		let newLocation = redirect.responseHeaders.find(function (header) {
 			return /location/i.test(header.name);
 		});
 		if (newLocation !== undefined) {
@@ -144,7 +144,7 @@ const setPiezCurrentState = function(state) {
 			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
 			chrome.action.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
 
-			piezRequestHeaders = [];
+			let piezRequestHeaders = [];
 
 			if (piezCurrentStateCached == 'piez-a2') {
 				piezRequestHeaders.push({ header: 'pragma', operation: 'set', value: 'x-akamai-a2-trace' });
