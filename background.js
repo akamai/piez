@@ -168,7 +168,7 @@ const setPiezCurrentState = function(state) {
 						type: 'modifyHeaders',
 						requestHeaders: piezRequestHeaders
 					},
-					condition: { urlFilter: '*', resourceTypes: ['main_frame', 'image', 'font', 'script', 'stylesheet'] }
+					condition: { urlFilter: '*', resourceTypes: ['main_frame', 'image', 'font', 'script', 'stylesheet', 'media'] }
 				}]
 				});
 
