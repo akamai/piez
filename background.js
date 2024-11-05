@@ -1,6 +1,6 @@
-var inspectedTab = {};
-var devtools_port;
-var piezCurrentStateOptions = {
+let inspectedTab = {};
+let devtools_port;
+const piezCurrentStateOptions = {
 	'piez-im-simple':
 	{
 		'browserActionText': 'IM',
@@ -36,10 +36,10 @@ var piezCurrentStateOptions = {
 		'localStorageState': 'piez-off'
 	}
 };
-var piezCurrentStateCached = '';
-var piezCurrentOptionsCached = [];
+let piezCurrentStateCached = '';
+let piezCurrentOptionsCached = [];
 
-beforeSendCallback = function (details) {
+const beforeSendCallback = function (details) {
 	if (details.url.indexOf('http') != -1) {
 		if (piezCurrentStateCached == 'piez-a2') {
 			details.requestHeaders.push({ name: 'pragma', value: 'x-akamai-a2-trace' });
@@ -48,7 +48,7 @@ beforeSendCallback = function (details) {
 			details.requestHeaders.push({ name: 'x-im-piez', value: 'on' });
 			details.requestHeaders.push({ name: 'pragma', value: 'akamai-x-ro-trace' });
 			details.requestHeaders.push({ name: 'x-akamai-ro-piez', value: 'on' });
-			details.requestHeaders.push({ name: 'x-akamai-a2-disable', value: 'on' })
+			details.requestHeaders.push({ name: 'x-akamai-a2-disable', value: 'on' });
 		}
 		if (piezCurrentOptionsCached.includes('save-data')) {
 			details.requestHeaders.push({ name: 'Save-Data', value: 'on' });
@@ -66,9 +66,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(function beforeNavigate(detail
 
 //get the actual url to use if there's a redirect for the base page
 chrome.webRequest.onBeforeRedirect.addListener(function getNewUrl(redirect) {
-	var urlMatch = new RegExp('(' + inspectedTab.url + '|' + inspectedTab.url + '/)', 'i');
+	let urlMatch = new RegExp('(' + inspectedTab.url + '|' + inspectedTab.url + '/)', 'i');
 	if (redirect.tabId === inspectedTab.id && redirect.frameId === 0 && urlMatch.test(redirect.url)) {
-		var newLocation = redirect.responseHeaders.find(function (header) {
+		let newLocation = redirect.responseHeaders.find(function (header) {
 			return /location/i.test(header.name);
 		});
 		if (newLocation !== undefined) {
@@ -96,11 +96,6 @@ chrome.runtime.onConnect.addListener(function (port) {
 					}
 				});
 				break;
-			case "update-piez-analytics":
-				chrome.tabs.getSelected(null, function (tab) {
-					logUrlAnalytics(tab);
-				});
-				break;
 			default:
 				console.log('Unexpected message from devtools. ', message);
 		}
@@ -112,71 +107,77 @@ chrome.runtime.onConnect.addListener(function (port) {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	console.log('here we go');
 	switch (request.type) {
 		case "piez-off":
-			setPiezCurrentState('piez-off');
-			break;
 		case "piez-im-simple":
-			setPiezCurrentState('piez-im-simple');
-			break;
 		case "piez-im-advanced":
-			setPiezCurrentState('piez-im-advanced');
-			break;
 		case "piez-a2":
-			setPiezCurrentState('piez-a2');
-			break;
 		case "piez-ro-simple":
-			setPiezCurrentState('piez-ro-simple');
-			break;
 		case "piez-ro-advanced":
-			setPiezCurrentState('piez-ro-advanced');
-			break;
 		case "piez-3pm":
-			setPiezCurrentState('piez-3pm');
-			break;
+		  console.log("Setting PiezCurrentState: " + request.type);
+		  setPiezCurrentState(request.type);
+		  break;
 		case "piez-options":
-			setPiezCurrentSettings(request.options);
-			break;
+		  console.log("Setting PiezCurrentState: " + request.options);
+		  setPiezCurrentSettings(request.options);
+		  break;
 		default:
-			console.log('Unexpected extension request. ', request);
+		  console.log('Unexpected extension request. ', request);
 	}
 	return false;
 });
 
-var logUrlAnalytics = function(tab) {
-	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-	ga('create', 'UA-62551710-2', 'auto');
-	ga('set', 'checkProtocolTask', function () { });
-	ga('require', 'displayfeatures');
-	ga('send', 'pageview', tab.url);
-};
-
-var setPiezCurrentState = function(state) {
+const setPiezCurrentState = function(state) {
  	if (state == 'piez-off') {
 		chrome.storage.local.set({ "piezCurrentState": state }, function () {
 			piezCurrentStateCached = state;
-			chrome.browserAction.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
-			chrome.browserAction.setBadgeBackgroundColor({ "color": [255, 0, 0, 255] });
-			chrome.webRequest.onBeforeSendHeaders.removeListener(beforeSendCallback);
+			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
+			chrome.action.setBadgeBackgroundColor({ "color": [255, 0, 0, 255] });
+			chrome.declarativeNetRequest.updateDynamicRules({
+				removeRuleIds: [1],
+			  });
 		});
 	} else {
 		chrome.storage.local.set({ "piezCurrentState": state }, function () {
 			piezCurrentStateCached = state;
-			chrome.browserAction.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
-			chrome.browserAction.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
-			if (!chrome.webRequest.onBeforeSendHeaders.hasListener(beforeSendCallback)) {
-				chrome.webRequest.onBeforeSendHeaders.addListener(beforeSendCallback, { urls: ["<all_urls>"] }, ['requestHeaders', 'extraHeaders', 'blocking']);
+			chrome.action.setBadgeText({ "text": piezCurrentStateOptions[state]["browserActionText"] });
+			chrome.action.setBadgeBackgroundColor({ "color": [0, 255, 0, 255] });
+
+			let piezRequestHeaders = [];
+
+			if (piezCurrentStateCached == 'piez-a2') {
+				piezRequestHeaders.push({ header: 'pragma', operation: 'set', value: 'x-akamai-a2-trace' });
+				piezRequestHeaders.push({ header: 'x-akamai-rua-debug', operation: 'set', value: 'on' });
+			} else {
+				piezRequestHeaders.push({ header: 'x-im-piez', operation: 'set', value: 'on' });
+				piezRequestHeaders.push({ header: 'pragma', operation: 'set', value: 'akamai-x-ro-trace' });
+				piezRequestHeaders.push({ header: 'x-akamai-ro-piez', operation: 'set', value: 'on' });
+				piezRequestHeaders.push({ header: 'x-akamai-a2-disable', operation: 'set', value: 'on' })
 			}
+			if (piezCurrentOptionsCached.includes('save-data')) {
+				piezRequestHeaders.push({ header: 'Save-Data', operation: 'set', value: 'on' });
+			}
+
+			chrome.declarativeNetRequest.updateDynamicRules({
+				removeRuleIds: [1],
+				addRules: [{
+					id: 1,
+					priority: 1,
+					action: {
+						type: 'modifyHeaders',
+						requestHeaders: piezRequestHeaders
+					},
+					condition: { urlFilter: '*', resourceTypes: ['main_frame', 'image', 'font', 'script', 'stylesheet', 'media'] }
+				}]
+				});
+
+
 		});
 	}
 };
 
-var setPiezCurrentSettings = function(options) {
+const setPiezCurrentSettings = function(options) {
 	chrome.storage.local.set({ "piezCurrentOptions": options }, function () {
 		piezCurrentOptionsCached = options;
 	});
@@ -190,12 +191,12 @@ chrome.runtime.onStartup.addListener(function () {
 	initPiezStorageState();
 });
 
-var initPiezStorageState = function () {
+const initPiezStorageState = function () {
 	chrome.storage.local.get("piezCurrentState", function (result) {
 		if (result["piezCurrentState"] == undefined) {
 			setPiezCurrentState('piez-im-simple');
 		} else {
-			key = result["piezCurrentState"];
+			const key = result["piezCurrentState"];
 			if (piezCurrentStateOptions[key] == undefined) {
 				setPiezCurrentState('piez-im-simple');
 			} else {

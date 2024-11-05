@@ -2,7 +2,7 @@
 	'use strict';
 
 	global.parseIcHeaders = function(http_transaction, page) {
-		var res = {};
+		let res = {};
 		res.url = http_transaction.request.url;
 
 		http_transaction.response.headers.forEach(function(header) {
@@ -20,12 +20,12 @@
 	};
 
 	global.parseImHeaders = function(http_transaction, page, display_mode) {
-		var res = {};
+		let res = {};
 		res.url = http_transaction.request.url;
 		res.contlen = http_transaction.response.content;
 		// Sum of video contentl
 		
-		var details = JSON.stringify(page.imDownloadDetails);
+		let details = JSON.stringify(page.imDownloadDetails);
 		if(details !== res.url){
 			page.totalIMImagesTransformed += 1;
 			extractImHeaders(http_transaction, page, res);
@@ -34,7 +34,7 @@
 	};
 
 	global.extractImHeaders = function(http_transaction, page, res) {
-		var headers = http_transaction.response.headers;
+		let headers = http_transaction.response.headers;
 		// Separate finds to process headers that are depended on first
 		let contypeObj    = headers.find(header => /^content-type$/i.test(header.name));
 		let filenameObj   = headers.find(header => /^x-im-file-name$/i.test(header.name));
@@ -81,7 +81,7 @@
 	};
 
 	global.parseNonImOrIcImageHeaders = function(http_transaction, page) {
-		var res = {};
+		let res = {};
 		res.url = http_transaction.request.url;
 
 		http_transaction.response.headers.forEach(function(header) {
